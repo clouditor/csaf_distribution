@@ -6,7 +6,7 @@
 // SPDX-FileCopyrightText: 2021 German Federal Office for Information Security (BSI) <https://www.bsi.bund.de>
 // Software-Engineering: 2021 Intevation GmbH <https://intevation.de>
 
-package main
+package checker
 
 import (
 	"bufio"
@@ -154,9 +154,9 @@ type nopCloser struct{ io.Writer }
 
 func (nc *nopCloser) Close() error { return nil }
 
-// write defines where to write the report according to the "output" flag option.
+// Write defines where to write the report according to the "output" flag option.
 // It calls also the "writeJSON" or "writeHTML" function according to the "format" flag option.
-func (r *Report) write(format outputFormat, output string) error {
+func (r *Report) Write(format outputFormat, output string) error {
 
 	var w io.WriteCloser
 

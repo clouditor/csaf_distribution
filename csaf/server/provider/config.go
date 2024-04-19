@@ -6,7 +6,7 @@
 // SPDX-FileCopyrightText: 2021 German Federal Office for Information Security (BSI) <https://www.bsi.bund.de>
 // Software-Engineering: 2021 Intevation GmbH <https://intevation.de>
 
-package main
+package provider
 
 import (
 	"fmt"
@@ -41,8 +41,8 @@ type providerMetadataConfig struct {
 	Publisher               *csaf.Publisher `toml:"publisher"`
 }
 
-// configs contains the config values for the provider.
-type config struct {
+// Config contains the config values for the provider.
+type Config struct {
 	Password                *string                      `toml:"password"`
 	OpenPGPPublicKey        string                       `toml:"openpgp_public_key"`
 	OpenPGPPrivateKey       string                       `toml:"openpgp_private_key"`
@@ -111,7 +111,7 @@ func (t *tlp) UnmarshalText(text []byte) error {
 
 // uploadLimiter returns a reader that reads from a given r reader but stops
 // with EOF after the defined bytes in the "UploadLimit" config option.
-func (cfg *config) uploadLimiter(r io.Reader) io.Reader {
+func (cfg *Config) uploadLimiter(r io.Reader) io.Reader {
 	// Zero or less means no upload limit.
 	if cfg.UploadLimit == nil || *cfg.UploadLimit < 1 {
 		return r
@@ -119,7 +119,7 @@ func (cfg *config) uploadLimiter(r io.Reader) io.Reader {
 	return io.LimitReader(r, *cfg.UploadLimit)
 }
 
-func (cfg *config) modelTLPs() []csaf.TLPLabel {
+func (cfg *Config) modelTLPs() []csaf.TLPLabel {
 	tlps := make([]csaf.TLPLabel, 0, len(cfg.TLPs))
 	for _, t := range cfg.TLPs {
 		if t != tlpCSAF {
@@ -140,7 +140,7 @@ func loadCryptoKeyFromFile(filename string) (*crypto.Key, error) {
 }
 
 // openPGPPublicURL constructs the public OpenPGP key URL for a given key.
-func (cfg *config) openPGPPublicURL(fingerprint string) string {
+func (cfg *Config) openPGPPublicURL(fingerprint string) string {
 	return fmt.Sprintf(
 		"%s/.well-known/csaf/openpgp/%s.asc",
 		cfg.CanonicalURLPrefix, fingerprint)
@@ -148,13 +148,13 @@ func (cfg *config) openPGPPublicURL(fingerprint string) string {
 
 // checkPassword compares the given hashed password with the plaintext in the "password" config value.
 // It returns true if these matches or if the "password" config value is not set, otherwise false.
-func (cfg *config) checkPassword(hash string) bool {
+func (cfg *Config) checkPassword(hash string) bool {
 	return cfg.Password == nil ||
 		bcrypt.CompareHashAndPassword([]byte(hash), []byte(*cfg.Password)) == nil
 }
 
 // HasCategories tells if categories are configured.
-func (cfg *config) HasCategories() bool {
+func (cfg *Config) HasCategories() bool {
 	return cfg.Categories != nil
 }
 
@@ -162,7 +162,7 @@ func (cfg *config) HasCategories() bool {
 const categoryExprPrefix = "expr:"
 
 // HasDynamicCategories tells if dynamic categories are configured.
-func (cfg *config) HasDynamicCategories() bool {
+func (cfg *Config) HasDynamicCategories() bool {
 	if !cfg.HasCategories() {
 		return false
 	}
@@ -175,7 +175,7 @@ func (cfg *config) HasDynamicCategories() bool {
 }
 
 // HasStaticCategories tells if static categories are configured.
-func (cfg *config) HasStaticCategories() bool {
+func (cfg *Config) HasStaticCategories() bool {
 	if !cfg.HasCategories() {
 		return false
 	}
@@ -188,7 +188,7 @@ func (cfg *config) HasStaticCategories() bool {
 }
 
 // StaticCategories returns a list on the configured static categories.
-func (cfg *config) StaticCategories() []string {
+func (cfg *Config) StaticCategories() []string {
 	if !cfg.HasCategories() {
 		return nil
 	}
@@ -202,7 +202,7 @@ func (cfg *config) StaticCategories() []string {
 }
 
 // DynamicCategories returns a list on the configured dynamic categories.
-func (cfg *config) DynamicCategories() []string {
+func (cfg *Config) DynamicCategories() []string {
 	if !cfg.HasCategories() {
 		return nil
 	}
@@ -215,19 +215,19 @@ func (cfg *config) DynamicCategories() []string {
 	return cats
 }
 
-// loadConfig extracts the config values from the config file. The path to the
+// LoadConfig extracts the config values from the config file. The path to the
 // file is taken either from environment variable "CSAF_CONFIG" or from the
 // defined default path in "defaultConfigPath".
 // Default values are set in case some are missing in the file.
 // It returns these values in a struct and nil if there is no error.
-func loadConfig() (*config, error) {
+func LoadConfig() (*Config, error) {
 	path := os.Getenv(configEnv)
 	if path == "" {
 		path = defaultConfigPath
 	}
 
 	// Preset defaults
-	cfg := config{
+	cfg := Config{
 		NoWebUI:         defaultNoWebUI,
 		ServiceDocument: defaultServiceDocument,
 	}

@@ -6,7 +6,7 @@
 // SPDX-FileCopyrightText: 2021 German Federal Office for Information Security (BSI) <https://www.bsi.bund.de>
 // Software-Engineering: 2021 Intevation GmbH <https://intevation.de>
 
-package main
+package checker
 
 import (
 	"bufio"
@@ -40,7 +40,7 @@ import (
 type topicMessages []Message
 
 type processor struct {
-	cfg          *config
+	cfg          *Config
 	validator    csaf.RemoteValidator
 	client       util.Client
 	unauthClient util.Client
@@ -164,8 +164,8 @@ func (m *topicMessages) hasErrors() bool {
 	return false
 }
 
-// newProcessor returns an initilaized processor.
-func newProcessor(cfg *config) (*processor, error) {
+// NewProcessor returns an initilaized processor.
+func NewProcessor(cfg *Config) (*processor, error) {
 
 	var validator csaf.RemoteValidator
 
@@ -194,8 +194,8 @@ func newProcessor(cfg *config) (*processor, error) {
 	}, nil
 }
 
-// close closes external ressources of the processor.
-func (p *processor) close() {
+// Close closes external ressources of the processor.
+func (p *processor) Close() {
 	if p.validator != nil {
 		p.validator.Close()
 		p.validator = nil
@@ -235,10 +235,10 @@ func (p *processor) reset() {
 	p.labelChecker.reset()
 }
 
-// run calls checkDomain function for each domain in the given "domains" parameter.
+// Run calls checkDomain function for each domain in the given "domains" parameter.
 // Then it calls the report method on each report from the given "reporters" parameter for each domain.
 // It returns a pointer to the report and nil, otherwise an error.
-func (p *processor) run(domains []string) (*Report, error) {
+func (p *processor) Run(domains []string) (*Report, error) {
 
 	report := Report{
 		Date:      ReportTime{Time: time.Now().UTC()},
