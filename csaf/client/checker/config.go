@@ -6,7 +6,7 @@
 // SPDX-FileCopyrightText: 2023 German Federal Office for Information Security (BSI) <https://www.bsi.bund.de>
 // Software-Engineering: 2023 Intevation GmbH <https://intevation.de>
 
-package main
+package checker
 
 import (
 	"crypto/tls"
@@ -26,7 +26,7 @@ const (
 	defaultFormat = "json"
 )
 
-type config struct {
+type Config struct {
 	Output string `short:"o" long:"output" description:"File name of the generated report" value-name:"REPORT-FILE" toml:"output"`
 	//lint:ignore SA5008 We are using choice twice: json, html.
 	Format                 outputFormat      `short:"f" long:"format" choice:"json" choice:"html" description:"Format of report" toml:"format"`
@@ -44,15 +44,15 @@ type config struct {
 	RemoteValidatorCache   string            `long:"validator_cache" description:"FILE to cache remote validations" value-name:"FILE" toml:"validator_cache"`
 	RemoteValidatorPresets []string          `long:"validator_preset" description:"One or more presets to validate remotely" toml:"validator_preset"`
 
-	Config string `short:"c" long:"config" description:"Path to config TOML file" value-name:"TOML-FILE" toml:"-"`
+	Config string `short:"c" long:"Config" description:"Path to Config TOML file" value-name:"TOML-FILE" toml:"-"`
 
 	clientCerts   []tls.Certificate
 	ignorePattern filter.PatternMatcher
 }
 
-// configPaths are the potential file locations of the config file.
-var configPaths = []string{
-	"~/.config/csaf/checker.toml",
+// ConfigPaths are the potential file locations of the Config file.
+var ConfigPaths = []string{
+	"~/.Config/csaf/checker.toml",
 	"~/.csaf_checker.toml",
 	"csaf_checker.toml",
 }
@@ -69,22 +69,22 @@ func (of *outputFormat) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// parseArgsConfig parse the command arguments and loads configuration
-// from a configuration file.
-func parseArgsConfig() ([]string, *config, error) {
-	p := options.Parser[config]{
-		DefaultConfigLocations: configPaths,
-		ConfigLocation: func(cfg *config) string {
+// ParseArgsConfig parse the command arguments and loads Configuration
+// from a Configuration file.
+func ParseArgsConfig() ([]string, *Config, error) {
+	p := options.Parser[Config]{
+		DefaultConfigLocations: ConfigPaths,
+		ConfigLocation: func(cfg *Config) string {
 			return cfg.Config
 		},
 		Usage:      "[OPTIONS] domain...",
-		HasVersion: func(cfg *config) bool { return cfg.Version },
-		SetDefaults: func(cfg *config) {
+		HasVersion: func(cfg *Config) bool { return cfg.Version },
+		SetDefaults: func(cfg *Config) {
 			cfg.Format = defaultFormat
 			cfg.RemoteValidatorPresets = []string{defaultPreset}
 		},
 		// Re-establish default values if not set.
-		EnsureDefaults: func(cfg *config) {
+		EnsureDefaults: func(cfg *Config) {
 			if cfg.Format == "" {
 				cfg.Format = defaultFormat
 			}
@@ -97,20 +97,20 @@ func parseArgsConfig() ([]string, *config, error) {
 }
 
 // protectedAccess returns true if we have client certificates or
-// extra http headers configured.
+// extra http headers Configured.
 // This may be a wrong assumption, because the certs are not checked
 // for their domain and custom headers may have other purposes.
-func (cfg *config) protectedAccess() bool {
+func (cfg *Config) protectedAccess() bool {
 	return len(cfg.clientCerts) > 0 || len(cfg.ExtraHeader) > 0
 }
 
 // ignoreFile returns true if the given URL should not be downloaded.
-func (cfg *config) ignoreURL(u string) bool {
+func (cfg *Config) ignoreURL(u string) bool {
 	return cfg.ignorePattern.Matches(u)
 }
 
-// prepare prepares internal state of a loaded configuration.
-func (cfg *config) prepare() error {
+// Prepare prepares internal state of a loaded Configuration.
+func (cfg *Config) Prepare() error {
 
 	// Pre-compile the regexes used to check if we need to ignore advisories.
 	if err := cfg.compileIgnorePatterns(); err != nil {
@@ -121,8 +121,8 @@ func (cfg *config) prepare() error {
 	return cfg.prepareCertificates()
 }
 
-// compileIgnorePatterns compiles the configure patterns to be ignored.
-func (cfg *config) compileIgnorePatterns() error {
+// compileIgnorePatterns compiles the Configure patterns to be ignored.
+func (cfg *Config) compileIgnorePatterns() error {
 	pm, err := filter.NewPatternMatcher(cfg.IgnorePattern)
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (cfg *config) compileIgnorePatterns() error {
 }
 
 // prepareCertificates loads the client side certificates used by the HTTP client.
-func (cfg *config) prepareCertificates() error {
+func (cfg *Config) prepareCertificates() error {
 	cert, err := certs.LoadCertificate(
 		cfg.ClientCert, cfg.ClientKey, cfg.ClientPassphrase)
 	if err != nil {

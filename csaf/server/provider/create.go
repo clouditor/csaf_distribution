@@ -6,7 +6,7 @@
 // SPDX-FileCopyrightText: 2021 German Federal Office for Information Security (BSI) <https://www.bsi.bund.de>
 // Software-Engineering: 2021 Intevation GmbH <https://intevation.de>
 
-package main
+package provider
 
 import (
 	"bufio"
@@ -28,12 +28,12 @@ import (
 
 // ensureFolders initializes the paths and call functions to create
 // the directories and files.
-func ensureFolders(c *config) error {
+func ensureFolders(c *Config) error {
 
 	wellknown := filepath.Join(c.Web, ".well-known")
 	wellknownCSAF := filepath.Join(wellknown, "csaf")
 
-	for _, create := range []func(*config, string) error{
+	for _, create := range []func(*Config, string) error{
 		createWellknown,
 		createFeedFolders,
 		createService,
@@ -56,7 +56,7 @@ func ensureFolders(c *config) error {
 
 // createWellknown creates ".well-known" directory if not exist and returns nil.
 // An error is returned if the it is not a directory.
-func createWellknown(_ *config, wellknown string) error {
+func createWellknown(_ *Config, wellknown string) error {
 	st, err := os.Stat(wellknown)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -71,7 +71,7 @@ func createWellknown(_ *config, wellknown string) error {
 }
 
 // createService creates the ROLIE service document (if configured).
-func createService(c *config, wellknownCSAF string) error {
+func createService(c *Config, wellknownCSAF string) error {
 	// no service document needed.
 	if !c.ServiceDocument {
 		return nil
@@ -120,7 +120,7 @@ func createService(c *config, wellknownCSAF string) error {
 // in the "tlps" config option if they do not already exist.
 // No creation for the "csaf" option will be done.
 // It creates also symbolic links to feed folders.
-func createFeedFolders(c *config, wellknown string) error {
+func createFeedFolders(c *Config, wellknown string) error {
 
 	// If we have static configured categories we need to create
 	// the category documents.
@@ -164,7 +164,7 @@ func createFeedFolders(c *config, wellknown string) error {
 }
 
 // createROLIEfeed creates an empty ROLIE feed
-func createROLIEfeed(c *config, t tlp, folder string) error {
+func createROLIEfeed(c *Config, t tlp, folder string) error {
 	ts := string(t)
 	feedName := "csaf-feed-tlp-" + ts + ".json"
 
@@ -207,7 +207,7 @@ func createROLIEfeed(c *config, t tlp, folder string) error {
 
 // createOpenPGPFolder creates an openpgp folder besides
 // the provider-metadata.json in the csaf folder.
-func createOpenPGPFolder(c *config, wellknown string) error {
+func createOpenPGPFolder(c *Config, wellknown string) error {
 
 	openPGPFolder := filepath.Join(wellknown, "openpgp")
 
@@ -250,7 +250,7 @@ func createOpenPGPFolder(c *config, wellknown string) error {
 // it checks ig the CSAF entry with the provider-metadata.json
 // path is already in. If its not it is added in front of all lines.
 // Otherwise the file is left untouched.
-func setupSecurity(c *config, wellknown string) error {
+func setupSecurity(c *Config, wellknown string) error {
 	security := filepath.Join(wellknown, "security.txt")
 
 	path := fmt.Sprintf(
@@ -334,7 +334,7 @@ func setupSecurity(c *config, wellknown string) error {
 }
 
 // createProviderMetadata creates the provider-metadata.json file if does not exist.
-func createProviderMetadata(c *config, wellknownCSAF string) error {
+func createProviderMetadata(c *Config, wellknownCSAF string) error {
 	path := filepath.Join(wellknownCSAF, "provider-metadata.json")
 	_, err := os.Stat(path)
 	if err == nil {

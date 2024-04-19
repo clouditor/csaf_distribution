@@ -12,24 +12,25 @@ package main
 import (
 	"log"
 
+	"github.com/csaf-poc/csaf_distribution/v3/csaf/client/checker"
 	"github.com/csaf-poc/csaf_distribution/v3/internal/options"
 )
 
 // run uses a processor to check all the given domains or direct urls
 // and generates a report.
-func run(cfg *config, domains []string) (*Report, error) {
-	p, err := newProcessor(cfg)
+func run(cfg *checker.Config, domains []string) (*checker.Report, error) {
+	p, err := checker.NewProcessor(cfg)
 	if err != nil {
 		return nil, err
 	}
-	defer p.close()
-	return p.run(domains)
+	defer p.Close()
+	return p.Run(domains)
 }
 
 func main() {
-	domains, cfg, err := parseArgsConfig()
+	domains, cfg, err := checker.ParseArgsConfig()
 	options.ErrorCheck(err)
-	options.ErrorCheck(cfg.prepare())
+	options.ErrorCheck(cfg.Prepare())
 
 	if len(domains) == 0 {
 		log.Println("No domain or direct url given.")
@@ -39,5 +40,5 @@ func main() {
 	report, err := run(cfg, domains)
 	options.ErrorCheck(err)
 
-	options.ErrorCheck(report.write(cfg.Format, cfg.Output))
+	options.ErrorCheck(report.Write(cfg.Format, cfg.Output))
 }

@@ -6,7 +6,7 @@
 // SPDX-FileCopyrightText: 2021 German Federal Office for Information Security (BSI) <https://www.bsi.bund.de>
 // Software-Engineering: 2021 Intevation GmbH <https://intevation.de>
 
-package main
+package provider
 
 import (
 	"os"
@@ -17,7 +17,7 @@ import (
 )
 
 func doTransaction(
-	cfg *config,
+	cfg *Config,
 	t tlp,
 	fn func(string, *csaf.ProviderMetadata) error,
 ) error {
